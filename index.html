@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM & Loyalty Strategy Report</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root{
+    --bg:#07111f;
+    --card:rgba(255,255,255,0.06);
+    --border:rgba(255,255,255,0.08);
+    --text:#ffffff;
+    --muted:#94a3b8;
+    --blue:#3b82f6;
+    --green:#22c55e;
+    --yellow:#eab308;
+    --red:#ef4444;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:
+    radial-gradient(circle at top left,#1d4ed8 0%,transparent 30%),
+    radial-gradient(circle at bottom right,#0f766e 0%,transparent 30%),
+    var(--bg);
+    color:var(--text);
+    overflow-x:hidden;
+}
+
+.container{
+    width:100%;
+}
+
+.slide{
+    min-height:100vh;
+    padding:70px 8%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    position:relative;
+}
+
+.glass{
+    background:var(--card);
+    backdrop-filter:blur(20px);
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:50px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.3);
+}
+
+h1{
+    font-size:62px;
+    font-weight:800;
+    line-height:1.1;
+    margin-bottom:20px;
+    background:linear-gradient(90deg,#60a5fa,#2dd4bf);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+h2{
+    font-size:38px;
+    margin-bottom:30px;
+}
+
+h3{
+    font-size:22px;
+    margin-bottom:14px;
+}
+
+p{
+    font-size:20px;
+    line-height:1.7;
+    color:var(--muted);
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:24px;
+}
+
+.card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:22px;
+    padding:28px;
+    transition:0.35s ease;
+}
+
+.card:hover{
+    transform:translateY(-6px);
+    background:rgba(255,255,255,0.07);
+}
+
+.badge{
+    display:inline-block;
+    padding:6px 14px;
+    border-radius:999px;
+    margin-top:12px;
+    font-size:13px;
+    font-weight:600;
+}
+
+.green{background:var(--green);}
+.yellow{background:var(--yellow);color:#111;}
+.red{background:var(--red);}
+
+.metric{
+    font-size:52px;
+    font-weight:800;
+    margin-bottom:10px;
+    color:#60a5fa;
+}
+
+ul{
+    padding-left:22px;
+}
+
+li{
+    margin-bottom:16px;
+    font-size:19px;
+    line-height:1.6;
+    color:var(--muted);
+}
+
+.timeline{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+}
+
+.step{
+    padding:24px;
+    border-left:4px solid var(--blue);
+    background:rgba(255,255,255,0.04);
+    border-radius:18px;
+}
+
+.step strong{
+    display:block;
+    margin-bottom:8px;
+    font-size:20px;
+}
+
+canvas{
+    margin-top:30px;
+    background:rgba(255,255,255,0.03);
+    border-radius:20px;
+    padding:20px;
+}
+
+.nav{
+    position:fixed;
+    right:30px;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:100;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.nav button{
+    width:14px;
+    height:14px;
+    border:none;
+    border-radius:50%;
+    background:rgba(255,255,255,0.35);
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.nav button:hover{
+    transform:scale(1.3);
+    background:#60a5fa;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:25px;
+}
+
+.table th{
+    text-align:left;
+    padding:18px;
+    background:rgba(255,255,255,0.05);
+    font-size:15px;
+}
+
+.table td{
+    padding:18px;
+    border-top:1px solid rgba(255,255,255,0.06);
+    color:var(--muted);
+    vertical-align:top;
+}
+
+.fade{
+    opacity:0;
+    transform:translateY(40px);
+    transition:1s ease;
+}
+
+.fade.visible{
+    opacity:1;
+    transform:translateY(0);
+}
+
+.highlight{
+    color:#60a5fa;
+    font-weight:700;
+}
+
+@media(max-width:900px){
+
+    h1{
+        font-size:42px;
+    }
+
+    h2{
+        font-size:30px;
+    }
+
+    .glass{
+        padding:30px;
+    }
+
+    .slide{
+        padding:40px 5%;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="nav">
+<button onclick="go(0)"></button>
+<button onclick="go(1)"></button>
+<button onclick="go(2)"></button>
+<button onclick="go(3)"></button>
+<button onclick="go(4)"></button>
+<button onclick="go(5)"></button>
+</div>
+
+<div class="container">
+
+<!-- HERO -->
+<section class="slide">
+<div class="glass fade">
+
+<h1>CRM + Loyalty<br>Architecture</h1>
+
+<p>
+Стратегическая трансформация компании:
+переход от хаотичного маркетинга к системе управления
+<span class="highlight">тёплой аудиторией</span>,
+LTV и повторными продажами.
+</p>
+
+</div>
+</section>
+
+<!-- INSIGHT -->
+<section class="slide">
+<div class="glass fade">
+
+<h2>Главный бизнес-инсайт</h2>
+
+<div class="grid">
+
+<div class="card">
+<div class="metric">90%</div>
+<h3>Тёплых лидов теряется</h3>
+<p>
+Люди проходят презентацию, пробуют продукт,
+но исчезают из системы.
+</p>
+</div>
+
+<div class="card">
+<div class="metric">15+</div>
+<h3>Менеджеров ежедневно</h3>
+<p>
+Компания уже имеет сильную офлайн-инфраструктуру,
+но не использует её как CRM-актив.
+</p>
+</div>
+
+<div class="card">
+<div class="metric">100+</div>
+<h3>Презентаций в день</h3>
+<p>
+Это не холодный трафик.
+Это уже прогретые люди с высоким потенциалом покупки.
+</p>
+</div>
+
+</div>
+
+</div>
+</section>
+
+<!-- STRATEGY -->
+<section class="slide">
+<div class="glass fade">
+
+<h2>Новая стратегия компании</h2>
+
+<div class="timeline">
+
+<div class="step">
+<strong>1. Сбор тёплых лидов</strong>
+После презентации менеджер регистрирует клиента
+в системе лояльности через QR-код.
+</div>
+
+<div class="step">
+<strong>2. Централизация в AMA CRM</strong>
+Все контакты попадают в единое ядро:
+статусы, сегментация, история покупок.
+</div>
+
+<div class="step">
+<strong>3. Автоматическая воронка</strong>
+Push, Telegram, Max, email,
+сценарии A/B/C.
+</div>
+
+<div class="step">
+<strong>4. Lifetime-модель</strong>
+Менеджер получает процент
+с будущих покупок клиента.
+</div>
+
+</div>
+
+<canvas id="strategyChart"></canvas>
+
+</div>
+</section>
+
+<!-- ARCH -->
+<section class="slide">
+<div class="glass fade">
+
+<h2>Архитектура системы</h2>
+
+<div class="grid">
+
+<div class="card">
+<h3>FRONT</h3>
+<ul>
+<li>QR-коды</li>
+<li>Telegram</li>
+<li>Max</li>
+<li>VK</li>
+<li>Web-form</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>CORE</h3>
+<ul>
+<li>AMA CRM</li>
+<li>Карточки клиентов</li>
+<li>Статусы</li>
+<li>История покупок</li>
+<li>Сегментация</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>AUTOMATION</h3>
+<ul>
+<li>Push-уведомления</li>
+<li>Автоворонки</li>
+<li>Welcome flow</li>
+<li>Бонусная система</li>
+<li>LTV-логика</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>ANALYTICS</h3>
+<ul>
+<li>Dashboard</li>
+<li>KPI менеджеров</li>
+<li>Продажи</li>
+<li>Повторные покупки</li>
+<li>LTV</li>
+</ul>
+</div>
+
+</div>
+
+</div>
+</section>
+
+<!-- TASKS -->
+<section class="slide">
+<div class="glass fade">
+
+<h2>Критические задачи</h2>
+
+<table class="table">
+
+<tr>
+<th>Задача</th>
+<th>Ответственный</th>
+<th>Срок</th>
+<th>Статус</th>
+</tr>
+
+<tr>
+<td>Система сбора тёплых лидов</td>
+<td>Андрей + отдел продаж</td>
+<td>1 июня</td>
+<td><span class="badge green">🟢</span></td>
+</tr>
+
+<tr>
+<td>QR-entry flow</td>
+<td>Андрей</td>
+<td>Следующий созвон</td>
+<td><span class="badge green">🟢</span></td>
+</tr>
+
+<tr>
+<td>Интеграция Telegram / Max / VK</td>
+<td>Андрей</td>
+<td>Не определён</td>
+<td><span class="badge yellow">🟡</span></td>
+</tr>
+
+<tr>
+<td>Сценарии A/B/C</td>
+<td>Миша + Таня + Андрей</td>
+<td>После выбора платформы</td>
+<td><span class="badge yellow">🟡</span></td>
+</tr>
+
+<tr>
+<td>Dashboard аналитики</td>
+<td>Андрей</td>
+<td>Не определён</td>
+<td><span class="badge yellow">🟡</span></td>
+</tr>
+
+<tr>
+<td>Production-релиз</td>
+<td>Андрей</td>
+<td>1 июня</td>
+<td><span class="badge green">🟢</span></td>
+</tr>
+
+</table>
+
+</div>
+</section>
+
+<!-- RISKS -->
+<section class="slide">
+<div class="glass fade">
+
+<h2>Критические риски</h2>
+
+<div class="grid">
+
+<div class="card">
+<h3>Слишком сложный старт</h3>
+<p>
+Есть риск одновременно запускать:
+wallet, push, CRM, loyalty,
+мессенджеры и аналитику.
+</p>
+<span class="badge red">Высокий риск</span>
+</div>
+
+<div class="card">
+<h3>Менеджеры перестанут заполнять</h3>
+<p>
+Если flow будет сложным,
+дисциплина сломается через несколько дней.
+</p>
+<span class="badge red">Критично</span>
+</div>
+
+<div class="card">
+<h3>CRM превратится в хаос</h3>
+<p>
+Без структуры статусов
+AMA станет свалкой лидов.
+</p>
+<span class="badge yellow">Средний риск</span>
+</div>
+
+</div>
+
+<canvas id="riskChart"></canvas>
+
+</div>
+</section>
+
+<script>
+function go(index){
+    document.querySelectorAll('.slide')[index]
+    .scrollIntoView({behavior:'smooth'});
+}
+
+const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+        if(entry.isIntersecting){
+            entry.target.classList.add('visible');
+        }
+    });
+},{threshold:0.2});
+
+document.querySelectorAll('.fade').forEach(el=>{
+    observer.observe(el);
+});
+
+new Chart(document.getElementById('strategyChart'),{
+    type:'radar',
+    data:{
+        labels:[
+            'Тёплая аудитория',
+            'Повторные продажи',
+            'Автоматизация',
+            'LTV',
+            'Контроль'
+        ],
+        datasets:[{
+            label:'Новый подход',
+            data:[95,90,85,92,88],
+            backgroundColor:'rgba(59,130,246,0.35)',
+            borderColor:'#60a5fa',
+            borderWidth:2
+        }]
+    },
+    options:{
+        plugins:{
+            legend:{
+                labels:{color:'#fff'}
+            }
+        },
+        scales:{
+            r:{
+                angleLines:{color:'rgba(255,255,255,0.1)'},
+                grid:{color:'rgba(255,255,255,0.1)'},
+                pointLabels:{color:'#fff'},
+                ticks:{display:false}
+            }
+        }
+    }
+});
+
+new Chart(document.getElementById('riskChart'),{
+    type:'bar',
+    data:{
+        labels:[
+            'Сложность',
+            'Дисциплина',
+            'CRM хаос'
+        ],
+        datasets:[{
+            label:'Уровень риска',
+            data:[90,95,70],
+            backgroundColor:[
+                '#ef4444',
+                '#ef4444',
+                '#eab308'
+            ]
+        }]
+    },
+    options:{
+        plugins:{
+            legend:{
+                labels:{color:'#fff'}
+            }
+        },
+        scales:{
+            y:{
+                ticks:{color:'#fff'},
+                grid:{color:'rgba(255,255,255,0.08)'}
+            },
+            x:{
+                ticks:{color:'#fff'},
+                grid:{display:false}
+            }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
